@@ -1278,6 +1278,41 @@ async function processPredictionCycle(gameData, currentHistoryData, lastProcesse
     };
 }
 
+/**
+ * Generates a new prediction for the next period by integrating multiple market analysis signals,
+ * historical data, and adaptive performance metrics. Utilizes an LLM (Gemini API) for decision synthesis,
+ * with robust fallback logic in case of API failure or insufficient history.
+ *
+ * @async
+ * @function generateNewPrediction
+ * @param {Array<Object>} history - Array of historical prediction objects, each containing at least an 'actual' outcome.
+ * @param {number} currentSystemLosses - The current count of consecutive system losses.
+ * @param {string|number} nextPeriodFull - The identifier for the next period to predict (string or number).
+ * @param {Object} currentSharedStats - Shared statistics object containing current drift state and other system-wide metrics.
+ * @returns {Promise<Object>} Resolves to a prediction result object with the following properties:
+ *   @property {string} prediction - The predicted outcome ("BIG" or "SMALL").
+ *   @property {number} number - The predicted number (0-9) corresponding to the outcome.
+ *   @property {string} finalDecision - The final decision ("BIG" or "SMALL").
+ *   @property {number} finalConfidence - The confidence score (0-100).
+ *   @property {number} confidenceLevel - Discrete confidence level (1-3).
+ *   @property {boolean} isForcedPrediction - Whether the prediction was forced due to uncertainty or fallback.
+ *   @property {string} overallLogic - Concatenated logic and rationale for the prediction.
+ *   @property {string} source - Source of the prediction ("Gemini_Combined_Engine" or "LLM_Fallback").
+ *   @property {Array<Object>} contributingSignals - Array of contributing signal sources and their weights.
+ *   @property {string} currentMacroRegime - The detected macro regime of the market.
+ *   @property {string} marketEntropyState - The current entropy state of the market.
+ *   @property {number} predictionQualityScore - Calculated quality score for the prediction (0.01-0.99).
+ *   @property {string} lastPredictedOutcome - The last predicted outcome.
+ *   @property {number} lastFinalConfidence - The last confidence score.
+ *   @property {number} lastConfidenceLevel - The last confidence level.
+ *   @property {string} lastMacroRegime - The last macro regime.
+ *   @property {Array<Object>} lastPredictionSignals - The last set of contributing signals.
+ *   @property {boolean} lastConcentrationModeEngaged - Whether concentration mode was engaged last prediction.
+ *   @property {string} lastMarketEntropyState - The last market entropy state.
+ *   @property {string} lastVolatilityRegime - The last volatility regime.
+ *   @property {string|number} periodFull - The period identifier for which the prediction was made.
+ * @throws {Error} If the Gemini API call fails and fallback logic cannot execute.
+ */
 async function generateNewPrediction(history, currentSystemLosses, nextPeriodFull, currentSharedStats) {
     console.log(`Refined Supercore vCombined Initializing Prediction for period ${nextPeriodFull}. MODE: ${engineMode}`);
     let masterLogic = [`RScore_Combined(M:${engineMode})`];
@@ -1538,6 +1573,7 @@ Provide your response strictly as a JSON object with the following schema:
         masterLogic.push(`LLM_Failed_Fallback_DeterministicDefault`);
         const finalDecision = (BigInt(nextPeriodFull) % 2n === 0n) ? "BIG" : "SMALL";
         const predictedNumber = finalDecision === 'BIG' ? Math.floor(mulberry32(parseInt(nextPeriodFull.slice(-6)) + 5)() * 5) + 5 : Math.floor(mulberry32(parseInt(nextPeriodFull.slice(-6)))() * 5);
+    // ...existing code...
         return {
              prediction: finalDecision, number: predictedNumber, finalDecision: finalDecision, finalConfidence: 50, confidenceLevel: 1, isForcedPrediction: true,
              overallLogic: masterLogic.join(' -> ') + ` -> FALLBACK (LLM Error: ${error.message.substring(0, 50)}...)`, source: "LLM_Fallback", contributingSignals: [], currentMacroRegime,
@@ -1547,8 +1583,8 @@ Provide your response strictly as a JSON object with the following schema:
              lastMarketEntropyState: marketEntropyAnalysis.state, lastVolatilityRegime: trendContext.volatility,
              periodFull: nextPeriodFull
         };
-    }
-}
+    } // <-- Add this closing brace to end the catch block and the function
+} // <-- Add this closing brace to end generateNewPrediction function
 
 // Initial load of state when this script is executed.
 loadPredictionEngineState();
