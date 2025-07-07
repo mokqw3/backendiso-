@@ -1538,7 +1538,7 @@ Provide your response strictly as a JSON object with the following schema:
         masterLogic.push(`LLM_Failed_Fallback_DeterministicDefault`);
         const finalDecision = (BigInt(nextPeriodFull) % 2n === 0n) ? "BIG" : "SMALL";
         const predictedNumber = finalDecision === 'BIG' ? Math.floor(mulberry32(parseInt(nextPeriodFull.slice(-6)) + 5)() * 5) + 5 : Math.floor(mulberry32(parseInt(nextPeriodFull.slice(-6)))() * 5);
-    return {
+        return {
              prediction: finalDecision, number: predictedNumber, finalDecision: finalDecision, finalConfidence: 50, confidenceLevel: 1, isForcedPrediction: true,
              overallLogic: masterLogic.join(' -> ') + ` -> FALLBACK (LLM Error: ${error.message.substring(0, 50)}...)`, source: "LLM_Fallback", contributingSignals: [], currentMacroRegime,
              concentrationModeEngaged, predictionQualityScore: 0.01,
@@ -1547,10 +1547,10 @@ Provide your response strictly as a JSON object with the following schema:
              lastMarketEntropyState: marketEntropyAnalysis.state, lastVolatilityRegime: trendContext.volatility,
              periodFull: nextPeriodFull
         };
-    } // <-- ADD THIS CLOSING BRACE
+    }
 }
 
 // Initial load of state when this script is executed.
 loadPredictionEngineState();
 
-module.exports = { processPredictionCycle };;
+module.exports = { processPredictionCycle };
